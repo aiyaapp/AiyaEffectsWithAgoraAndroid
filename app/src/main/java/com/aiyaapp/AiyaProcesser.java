@@ -9,6 +9,9 @@ import com.aiya.jni.DataConvert;
 import com.aiyaapp.aiya.AiyaBeauty;
 import com.aiyaapp.aiya.AiyaTracker;
 import com.aiyaapp.aiya.filter.AyBeautyFilter;
+import com.aiyaapp.aiya.filter.AyBigEyeFilter;
+import com.aiyaapp.aiya.filter.AyThinFaceFilter;
+import com.aiyaapp.aiya.filter.AyTrackFilter;
 import com.aiyaapp.aiya.render.AiyaGiftFilter;
 
 import java.nio.ByteBuffer;
@@ -32,33 +35,46 @@ import javax.microedition.khronos.opengles.GL10;
 
 public class AiyaProcesser implements GLSurfaceView.Renderer {
 
-
     private final YuvFilter mYuvFilter;
     private GroupFilter mGroupFilter;
     private NoFilter mShowFilter;
     private GLEnvironment mGLEnvironment;
+
+    private AyTrackFilter mTrackFilter;
     private AyBeautyFilter mAiyaBeautyFilter;
+    private AyBigEyeFilter mAiyaBigEeyeFilter;
+    private AyThinFaceFilter mAiyaThinFaceFilter;
     private AiyaGiftFilter mGiftFilter;
 
     public AiyaProcesser(Context context) {
 
-        //初始化美颜类型
+        // 人脸跟踪
+        mTrackFilter = new AyTrackFilter(context);
+
+        // 美颜
         mAiyaBeautyFilter = new AyBeautyFilter(AiyaBeauty.TYPE1);
 
-        //初始化特效
+        // 大眼
+        mAiyaBigEeyeFilter = new AyBigEyeFilter();
+
+        // 瘦脸
+        mAiyaThinFaceFilter = new AyThinFaceFilter();
+
+        // 特效
         mGiftFilter = new AiyaGiftFilter(context, new AiyaTracker(context));
 
+        // yuv 转换成 rgb, 是数据输入端
         mYuvFilter = new YuvFilter(context.getResources());
-
         MatrixUtils.rotate(mYuvFilter.getMatrix(), 270);
         MatrixUtils.flip(mYuvFilter.getMatrix(), false, true);
-
-
         mGroupFilter = new GroupFilter(context.getResources());
         mGroupFilter.addFilter(mYuvFilter);
+
+        // 数据输出端
         mShowFilter = new NoFilter(context.getResources());
         MatrixUtils.rotate(mShowFilter.getMatrix(), 270);
 
+        // OpenGL 环境
         mGLEnvironment = new GLEnvironment(context);
         mGLEnvironment.setEGLContextClientVersion(2);
         mGLEnvironment.setEGLWindowSurfaceFactory(new GLEnvironment.EGLWindowSurfaceFactory() {
@@ -98,15 +114,17 @@ public class AiyaProcesser implements GLSurfaceView.Renderer {
         mGLEnvironment.requestRender();
     }
 
-
     public void setEffect(String path) {
         mGiftFilter.setEffect(path);
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        mGiftFilter.create();
+        mTrackFilter.create();
         mAiyaBeautyFilter.create();
+        mAiyaBigEeyeFilter.create();
+        mAiyaThinFaceFilter.create();
+        mGiftFilter.create();
         mGroupFilter.create();
         mShowFilter.create();
 
@@ -134,9 +152,16 @@ public class AiyaProcesser implements GLSurfaceView.Renderer {
                     filterHeight = dataHeight;
                     filterWidth = dataWidth;
 
+                    mTrackFilter.sizeChanged(dataWidth, dataHeight);
+
                     mAiyaBeautyFilter.sizeChanged(dataWidth, dataHeight);
-                    //设置美颜强度(取值范围0~1)
                     mAiyaBeautyFilter.setDegree(1.0f);
+
+                    mAiyaBigEeyeFilter.sizeChanged(dataWidth, dataHeight);
+                    mAiyaBigEeyeFilter.setDegree(0.5f);
+
+                    mAiyaThinFaceFilter.sizeChanged(dataWidth, dataHeight);
+                    mAiyaThinFaceFilter.setDegree(0.5f);
 
                     mGiftFilter.sizeChanged(dataWidth, dataHeight);
 
@@ -148,18 +173,27 @@ public class AiyaProcesser implements GLSurfaceView.Renderer {
                     mOutPutData = ByteBuffer.allocateDirect(dataWidth * dataHeight * 4);
                     mOutPutData.position(0);
                     mOutPutByte = new byte[dataWidth * dataHeight * 4];
-
-
                 }
+
                 GLES20.glViewport(0, 0, filterWidth, filterHeight);
                 mYuvFilter.updateFrame(dataHeight, dataWidth, data);
                 mGroupFilter.draw();
 
-                int txtid = mGiftFilter.drawToTexture(mGroupFilter.getOutputTexture());
-                int txtid2 = mAiyaBeautyFilter.drawToTexture(txtid);
+                mTrackFilter.drawToTexture(mGroupFilter.getOutputTexture());
+
+                int texture = mAiyaBeautyFilter.drawToTexture(mGroupFilter.getOutputTexture());
+
+                mGiftFilter.setFaceDataID(mTrackFilter.getFaceDataID());
+                texture = mGiftFilter.drawToTexture(texture);
+
+                mAiyaBigEeyeFilter.setFaceDataID(mTrackFilter.getFaceDataID());
+                texture  = mAiyaBigEeyeFilter.drawToTexture(texture);
+
+                mAiyaThinFaceFilter.setFaceDataID(mTrackFilter.getFaceDataID());
+                texture = mAiyaThinFaceFilter.drawToTexture(texture);
 
                 GLES20.glViewport(0, 0, filterHeight, filterWidth);
-                mShowFilter.setTextureId(txtid2);
+                mShowFilter.setTextureId(texture);
                 mShowFilter.draw();
                 mOutPutData.position(0);
                 GLES20.glReadPixels(0, 0, filterHeight, filterWidth, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, mOutPutData);
@@ -182,5 +216,7 @@ public class AiyaProcesser implements GLSurfaceView.Renderer {
     public void destroy() {
         mGiftFilter.destroy();
         mAiyaBeautyFilter.destroy();
+        mAiyaBigEeyeFilter.destroy();
+        mAiyaThinFaceFilter.destroy();
     }
 }
