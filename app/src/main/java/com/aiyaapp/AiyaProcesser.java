@@ -61,7 +61,7 @@ public class AiyaProcesser implements GLSurfaceView.Renderer {
         mAiyaThinFaceFilter = new AyThinFaceFilter();
 
         // 特效
-        mGiftFilter = new AiyaGiftFilter(context, new AiyaTracker(context));
+        mGiftFilter = new AiyaGiftFilter(context, null;
 
         // yuv 转换成 rgb, 是数据输入端
         mYuvFilter = new YuvFilter(context.getResources());
