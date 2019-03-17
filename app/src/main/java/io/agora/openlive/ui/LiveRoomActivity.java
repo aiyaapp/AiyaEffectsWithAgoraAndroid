@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SurfaceView;
@@ -34,6 +33,7 @@ import io.agora.openlive.model.VideoStatusData;
 import io.agora.rtc.Constants;
 import io.agora.rtc.RtcEngine;
 import io.agora.rtc.video.VideoCanvas;
+import io.agora.rtc.video.VideoEncoderConfiguration;
 
 public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
 
@@ -56,12 +56,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         AiyaEffects.setEventListener(new IEventListener() {
             @Override
             public int onEvent(int i, int i1, String s) {
-                Log.e("xiaoruan", "MSG(type/ret/info):" + i + "/" + i1 + "/" + s);
+                log.error("xiaoruan", "MSG(type/ret/info):" + i + "/" + i1 + "/" + s);
                 return 0;
             }
         });
         AiyaEffects.init(getApplicationContext(), "cc13acdbebf941af99a749aa505a2e05");
         MRender.create(this);
+        log.error("aiyaapp", "register auth license and initial render\n");
     }
 
 
@@ -146,12 +147,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         textRoomName.setText(roomName);
     }
 
-    private void broadcasterUI(ImageView button1, ImageView button2, ImageView button3) {
+    private void broadcasterUI(final ImageView button1, ImageView button2, ImageView button3) {
         button1.setTag(true);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Object tag = v.getTag();
+                button1.setEnabled(false);
                 if (tag != null && (boolean) tag) {
                     doSwitchToBroadcaster(false);
                 } else {
@@ -188,12 +190,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         });
     }
 
-    private void audienceUI(ImageView button1, ImageView button2, ImageView button3) {
+    private void audienceUI(final ImageView button1, ImageView button2, ImageView button3) {
         button1.setTag(null);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Object tag = v.getTag();
+                button1.setEnabled(false);
                 if (tag != null && (boolean) tag) {
                     doSwitchToBroadcaster(false);
                 } else {
@@ -211,12 +214,12 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
     private void doConfigEngine(int cRole) {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         int prefIndex = pref.getInt(ConstantApp.PrefManager.PREF_PROPERTY_PROFILE_IDX, ConstantApp.DEFAULT_PROFILE_IDX);
-        if (prefIndex > ConstantApp.VIDEO_PROFILES.length - 1) {
+        if (prefIndex > ConstantApp.VIDEO_DIMENSIONS.length - 1) {
             prefIndex = ConstantApp.DEFAULT_PROFILE_IDX;
         }
-        int vProfile = ConstantApp.VIDEO_PROFILES[prefIndex];
+        VideoEncoderConfiguration.VideoDimensions dimension = ConstantApp.VIDEO_DIMENSIONS[prefIndex];
 
-        worker().configEngine(cRole, vProfile);
+        worker().configEngine(cRole, dimension);
     }
 
     @Override
@@ -275,6 +278,9 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         final int uid = config().mUid;
         log.debug("doSwitchToBroadcaster " + currentHostCount + " " + (uid & 0XFFFFFFFFL) + " " + broadcaster);
 
+        final ImageView button1 = (ImageView) findViewById(R.id.btn_1);
+        final ImageView button2 = (ImageView) findViewById(R.id.btn_2);
+        final ImageView button3 = (ImageView) findViewById(R.id.btn_3);
         if (broadcaster) {
             doConfigEngine(Constants.CLIENT_ROLE_BROADCASTER);
 
@@ -282,16 +288,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
                 @Override
                 public void run() {
                     doRenderRemoteUi(uid);
-
-                    ImageView button1 = (ImageView) findViewById(R.id.btn_1);
-                    ImageView button2 = (ImageView) findViewById(R.id.btn_2);
-                    ImageView button3 = (ImageView) findViewById(R.id.btn_3);
                     broadcasterUI(button1, button2, button3);
-
+                    button1.setEnabled(true);
                     doShowButtons(false);
                 }
             }, 1000); // wait for reconfig engine
         } else {
+            button1.setEnabled(true);
             stopInteraction(currentHostCount, uid);
         }
     }

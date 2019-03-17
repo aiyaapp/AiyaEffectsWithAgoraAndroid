@@ -1,9 +1,11 @@
 package io.agora.openlive.model;
 
+import io.agora.rtc.video.VideoEncoderConfiguration;
+
 public class EngineConfig {
     public int mClientRole;
 
-    public int mVideoProfile;
+    public VideoEncoderConfiguration.VideoDimensions mVideoDimension;;
 
     public int mUid;
 

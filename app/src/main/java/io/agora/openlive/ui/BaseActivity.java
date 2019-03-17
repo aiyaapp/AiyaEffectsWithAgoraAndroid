@@ -16,12 +16,6 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Arrays;
-
 import io.agora.common.Constant;
 import io.agora.openlive.AGApplication;
 import io.agora.openlive.BuildConfig;
@@ -30,6 +24,10 @@ import io.agora.openlive.model.EngineConfig;
 import io.agora.openlive.model.MyEngineEventHandler;
 import io.agora.openlive.model.WorkerThread;
 import io.agora.rtc.RtcEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 public abstract class BaseActivity extends AppCompatActivity {
     private final static Logger log = LoggerFactory.getLogger(BaseActivity.class);
@@ -190,8 +188,6 @@ public abstract class BaseActivity extends AppCompatActivity {
                     finish();
                 }
                 break;
-
-
             }
             case ConstantApp.PERMISSION_REQ_ID_READ_PHONE_STATE: {
                 if (grantResults.length > 0
