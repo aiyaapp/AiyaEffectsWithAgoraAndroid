@@ -1,28 +1,26 @@
 apply plugin: 'com.android.application'
 
-repositories {
-    jcenter()
-}
-
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.3"
 
     defaultConfig {
-        applicationId "io.agora.OpenLive"
-        minSdkVersion 16 // JELLY_BEAN
+        applicationId "com.aiyaapp.aiya.test"
+        minSdkVersion 18 // JELLY_BEAN
         targetSdkVersion 27
         versionCode 8
         versionName "x.y.z"
 
-        ndk {
-            abiFilters "armeabi-v7a"
-        }
-
+        //----------哎吖科技添加 start----------
         externalNativeBuild {
-            ndkBuild {
-                arguments "NDK_APPLICATION_MK:=src/main/cpp/Application.mk"
+            cmake {
+                cppFlags "-std=c++11 -frtti -fexceptions"
+                arguments '-DANDROID_TOOLCHAIN=clang', '-DANDROID_STL=gnustl_static'
             }
+        }
+        //----------哎吖科技添加 end----------
+
+        ndk {
+            abiFilters "armeabi-v7a" // DO NOT MODIFY THIS LINE, IT'S UPDATED BY BUILD MACHINE AUTOMATICALLY.
         }
     }
 
@@ -38,38 +36,37 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
+    //----------哎吖科技添加 start----------
+    externalNativeBuild {
+        cmake {
+            path 'CMakeLists.txt'
         }
     }
+    //----------哎吖科技添加 end----------
 
-    externalNativeBuild {
-        ndkBuild {
-            path 'src/main/cpp/Android.mk'
+    sourceSets {
+        main {
+            jniLibs.srcDirs += "libs"
         }
     }
 }
 
 dependencies {
-    compile fileTree(dir: '../../../libs', include: ['*.jar'])
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar']) // DO NOT CHANGE, CI may needs it when packaging
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:design:27.1.1'
 
-    compile 'io.agora.rtc:full-sdk:2.0.0'
-    compile 'com.android.support:appcompat-v7:27.1.1'
-    compile 'com.android.support:support-v4:27.1.1'
-    compile 'com.android.support:design:27.1.1'
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'com.github.tony19:logback-android-core:1.1.1-4'
-    compile('com.github.tony19:logback-android-classic:1.1.1-4') {
+    // ---------- 哎吖科技添加 开始 ----------
+    implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.0'
+    // ---------- 哎吖科技添加 结束 ----------
+
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation 'com.github.tony19:logback-android-core:1.1.1-5'
+    implementation('com.github.tony19:logback-android-classic:1.1.1-4') {
         // workaround issue #73
         exclude group: 'com.google.android', module: 'android'
     }
 
-    compile 'com.aiyaapp.aiya:AyCore:v4.1.0'
-    compile 'com.aiyaapp.aiya:AyEffect:v4.1.0'
-    compile 'com.aiyaapp.aiya:AyFaceTrack:v4.1.0'
-    compile 'com.aiyaapp.aiya:AyBeauty:v4.1.0'
-    compile 'com.aiyaapp.aavt:aavt:v4.1.0'
-    compile 'com.aiyaapp.aiya:AyShortVideoEffect:v4.1.0'
+    androidTestImplementation 'com.jayway.android.robotium:robotium-solo:5.6.3'
 }

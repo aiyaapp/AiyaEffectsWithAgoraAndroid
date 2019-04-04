@@ -6,11 +6,19 @@ import android.support.v7.app.AlertDialog;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+
+import com.aiyaapp.aiya.AYLicenseManager;
+import com.aiyaapp.aiya.AyCore;
+import com.aiyaapp.aiya.AyFaceTrack;
+
+import java.io.File;
+
 import io.agora.openlive.R;
 import io.agora.openlive.model.ConstantApp;
 import io.agora.rtc.Constants;
@@ -20,6 +28,27 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // ----------哎吖科技添加 start----------
+        AYLicenseManager.initLicense(getApplicationContext(), "477de67d19ba39fb656a4806c803b552", new AyCore.OnResultCallback() {
+            @Override
+            public void onResult(int ret) {
+                Log.d("哎吖科技", "License初始化结果 : " + ret);
+            }
+        });
+
+        // copy数据
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String dstPath = getExternalCacheDir() + "/aiya/effect";
+                if (!new File(dstPath).exists()) {
+                    AyFaceTrack.deleteFile(new File(dstPath));
+                    AyFaceTrack.copyFileFromAssets("modelsticker", dstPath, getAssets());
+                }
+            }
+        }).start();
+        // ----------哎吖科技添加 end----------
     }
 
     @Override

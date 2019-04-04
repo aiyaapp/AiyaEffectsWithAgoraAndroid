@@ -2,7 +2,10 @@ package io.agora.openlive.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.graphics.PorterDuff;
+import android.graphics.SurfaceTexture;
+import android.opengl.EGL14;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -11,6 +14,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewStub;
@@ -18,13 +22,15 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.aiyaapp.MRender;
-import com.aiyaapp.aiya.AiyaEffects;
-import com.aiyaapp.aiya.IEventListener;
+import com.aiyaapp.aiya.AYEffectHandler;
+import com.aiyaapp.aiya.AyAgoraTool;
+import com.aiyaapp.aiya.gpuImage.AYGPUImageConstants;
+import com.aiyaapp.aiya.gpuImage.AYGPUImageEGLContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import io.agora.openlive.R;
@@ -34,8 +40,9 @@ import io.agora.openlive.model.VideoStatusData;
 import io.agora.rtc.Constants;
 import io.agora.rtc.RtcEngine;
 import io.agora.rtc.video.VideoCanvas;
+import io.agora.rtc.video.VideoEncoderConfiguration;
 
-public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
+public class LiveRoomActivity extends BaseActivity implements AGEventHandler, SurfaceHolder.Callback {
 
     private final static Logger log = LoggerFactory.getLogger(LiveRoomActivity.class);
 
@@ -45,30 +52,14 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
 
     private final HashMap<Integer, SurfaceView> mUidsList = new HashMap<>(); // uid = 0 || uid == EngineConfig.mUid
 
+    // ----------哎吖科技添加 start----------
+    AYEffectHandler effectHandler;
+    // ----------哎吖科技添加 end----------
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_live_room);
-        initAiya();
-    }
-
-    private void initAiya() {
-        AiyaEffects.setEventListener(new IEventListener() {
-            @Override
-            public int onEvent(int i, int i1, String s) {
-                Log.e("xiaoruan", "MSG(type/ret/info):" + i + "/" + i1 + "/" + s);
-                return 0;
-            }
-        });
-        AiyaEffects.init(getApplicationContext(), "cc13acdbebf941af99a749aa505a2e05");
-        MRender.create(this);
-    }
-
-
-    @Override
-    protected void onDestroy() {
-        MRender.destroy();
-        super.onDestroy();
     }
 
     @Override
@@ -127,9 +118,11 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
 
         if (isBroadcaster(cRole)) {
             SurfaceView surfaceV = RtcEngine.CreateRendererView(getApplicationContext());
+            // ----------哎吖科技添加 start----------
+            surfaceV.getHolder().addCallback(this);
+            // ----------哎吖科技添加 end----------
+
             rtcEngine().setupLocalVideo(new VideoCanvas(surfaceV, VideoCanvas.RENDER_MODE_HIDDEN, 0));
-            surfaceV.setZOrderOnTop(true);
-            surfaceV.setZOrderMediaOverlay(true);
 
             mUidsList.put(0, surfaceV); // get first surface view
 
@@ -144,14 +137,28 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
 
         TextView textRoomName = (TextView) findViewById(R.id.room_name);
         textRoomName.setText(roomName);
+
+        // ----------哎吖科技添加 start----------
+        AyAgoraTool.setAgoraDataCallback(new AyAgoraTool.AgoraDataCallback() {
+
+            @Override
+            public void onResult(final byte[] buffer, final int width, final int height) {
+                if (effectHandler != null) {
+                    effectHandler.processWithYUVData(buffer, width, height);
+                }
+            }
+        });
+        // ----------哎吖科技添加 end----------
+
     }
 
-    private void broadcasterUI(ImageView button1, ImageView button2, ImageView button3) {
+    private void broadcasterUI(final ImageView button1, ImageView button2, ImageView button3) {
         button1.setTag(true);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Object tag = v.getTag();
+                button1.setEnabled(false);
                 if (tag != null && (boolean) tag) {
                     doSwitchToBroadcaster(false);
                 } else {
@@ -188,12 +195,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         });
     }
 
-    private void audienceUI(ImageView button1, ImageView button2, ImageView button3) {
+    private void audienceUI(final ImageView button1, ImageView button2, ImageView button3) {
         button1.setTag(null);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Object tag = v.getTag();
+                button1.setEnabled(false);
                 if (tag != null && (boolean) tag) {
                     doSwitchToBroadcaster(false);
                 } else {
@@ -211,12 +219,12 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
     private void doConfigEngine(int cRole) {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
         int prefIndex = pref.getInt(ConstantApp.PrefManager.PREF_PROPERTY_PROFILE_IDX, ConstantApp.DEFAULT_PROFILE_IDX);
-        if (prefIndex > ConstantApp.VIDEO_PROFILES.length - 1) {
+        if (prefIndex > ConstantApp.VIDEO_DIMENSIONS.length - 1) {
             prefIndex = ConstantApp.DEFAULT_PROFILE_IDX;
         }
-        int vProfile = ConstantApp.VIDEO_PROFILES[prefIndex];
+        VideoEncoderConfiguration.VideoDimensions dimension = ConstantApp.VIDEO_DIMENSIONS[prefIndex];
 
-        worker().configEngine(cRole, vProfile);
+        worker().configEngine(cRole, dimension);
     }
 
     @Override
@@ -275,6 +283,9 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         final int uid = config().mUid;
         log.debug("doSwitchToBroadcaster " + currentHostCount + " " + (uid & 0XFFFFFFFFL) + " " + broadcaster);
 
+        final ImageView button1 = (ImageView) findViewById(R.id.btn_1);
+        final ImageView button2 = (ImageView) findViewById(R.id.btn_2);
+        final ImageView button3 = (ImageView) findViewById(R.id.btn_3);
         if (broadcaster) {
             doConfigEngine(Constants.CLIENT_ROLE_BROADCASTER);
 
@@ -282,16 +293,13 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
                 @Override
                 public void run() {
                     doRenderRemoteUi(uid);
-
-                    ImageView button1 = (ImageView) findViewById(R.id.btn_1);
-                    ImageView button2 = (ImageView) findViewById(R.id.btn_2);
-                    ImageView button3 = (ImageView) findViewById(R.id.btn_3);
                     broadcasterUI(button1, button2, button3);
-
+                    button1.setEnabled(true);
                     doShowButtons(false);
                 }
             }, 1000); // wait for reconfig engine
         } else {
+            button1.setEnabled(true);
             stopInteraction(currentHostCount, uid);
         }
     }
@@ -323,8 +331,6 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
                 }
 
                 SurfaceView surfaceV = RtcEngine.CreateRendererView(getApplicationContext());
-                surfaceV.setZOrderOnTop(true);
-                surfaceV.setZOrderMediaOverlay(true);
                 mUidsList.put(uid, surfaceV);
                 if (config().mUid == uid) {
                     rtcEngine().setupLocalVideo(new VideoCanvas(surfaceV, VideoCanvas.RENDER_MODE_HIDDEN, uid));
@@ -509,4 +515,45 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler {
         recycler.setVisibility(View.VISIBLE);
         mSmallVideoViewDock.setVisibility(View.VISIBLE);
     }
+
+    // ----------哎吖科技添加 start----------
+    @Override
+    public void surfaceCreated(final SurfaceHolder holder) {
+        effectHandler = new AYEffectHandler(getApplicationContext(), false);
+        // 设置美颜程度
+        effectHandler.setIntensityOfBeauty(0.5f);
+        // 设置大眼瘦脸
+        effectHandler.setIntensityOfBigEye(0.2f);
+        effectHandler.setIntensityOfSlimFace(0.8f);
+
+        try {
+            // 添加滤镜
+            effectHandler.setStyle(BitmapFactory.decodeStream(getApplicationContext().getAssets().open("FilterResources/filter/03桃花.JPG")));
+            effectHandler.setIntensityOfStyle(0.5f);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // 设置正常的方向
+        effectHandler.setRotateMode(AYGPUImageConstants.AYGPUImageRotationMode.kAYGPUImageRotateRightFlipHorizontal);
+
+        // 设置特效
+        effectHandler.setEffectPath(getExternalCacheDir() + "/aiya/effect/2017/meta.json");
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        if (effectHandler != null) {
+            effectHandler.destroy();
+            effectHandler = null;
+        }
+    }
+    // ----------哎吖科技添加 end----------
+
+
 }

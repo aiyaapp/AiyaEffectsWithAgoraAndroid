@@ -8,20 +8,20 @@ import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.text.TextUtils;
+import io.agora.common.Constant;
+import io.agora.openlive.R;
+import io.agora.rtc.Constants;
+import io.agora.rtc.RtcEngine;
+import io.agora.rtc.video.VideoCanvas;
+import io.agora.rtc.video.VideoEncoderConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-
-import io.agora.openlive.R;
-import io.agora.propeller.preprocessing.VideoPreProcessing;
-import io.agora.rtc.Constants;
-import io.agora.rtc.RtcEngine;
-import io.agora.rtc.video.VideoCanvas;
 
 public class WorkerThread extends Thread {
     private final static Logger log = LoggerFactory.getLogger(WorkerThread.class);
@@ -71,7 +71,7 @@ public class WorkerThread extends Thread {
                     break;
                 case ACTION_WORKER_CONFIG_ENGINE:
                     Object[] configData = (Object[]) msg.obj;
-                    mWorkerThread.configEngine((int) configData[0], (int) configData[1]);
+                    mWorkerThread.configEngine((int) configData[0], (VideoEncoderConfiguration.VideoDimensions) configData[1]);
                     break;
                 case ACTION_WORKER_PREVIEW:
                     Object[] previewData = (Object[]) msg.obj;
@@ -129,8 +129,6 @@ public class WorkerThread extends Thread {
 
         mEngineConfig.mChannel = channel;
 
-        new VideoPreProcessing().enablePreProcessing(true);
-
         log.debug("joinChannel " + channel + " " + uid);
     }
 
@@ -161,25 +159,29 @@ public class WorkerThread extends Thread {
 
     private final MyEngineEventHandler mEngineEventHandler;
 
-    public final void configEngine(int cRole, int vProfile) {
+    public final void configEngine(int cRole, VideoEncoderConfiguration.VideoDimensions videoDimension) {
         if (Thread.currentThread() != this) {
-            log.warn("configEngine() - worker thread asynchronously " + cRole + " " + vProfile);
+            log.warn("configEngine() - worker thread asynchronously " + cRole + " " + videoDimension);
             Message envelop = new Message();
             envelop.what = ACTION_WORKER_CONFIG_ENGINE;
-            envelop.obj = new Object[]{cRole, vProfile};
+            envelop.obj = new Object[]{cRole, videoDimension};
             mWorkerHandler.sendMessage(envelop);
             return;
         }
 
         ensureRtcEngineReadyLock();
         mEngineConfig.mClientRole = cRole;
-        mEngineConfig.mVideoProfile = vProfile;
+        mEngineConfig.mVideoDimension = videoDimension;
 
-        mRtcEngine.setVideoProfile(mEngineConfig.mVideoProfile, true);
+//      mRtcEngine.setVideoProfile(mEngineConfig.mVideoProfile, true); // Earlier than 2.3.0
+        mRtcEngine.setVideoEncoderConfiguration(new VideoEncoderConfiguration(videoDimension,
+                VideoEncoderConfiguration.FRAME_RATE.FRAME_RATE_FPS_15,
+                VideoEncoderConfiguration.STANDARD_BITRATE,
+                VideoEncoderConfiguration.ORIENTATION_MODE.ORIENTATION_MODE_FIXED_PORTRAIT));
 
-        mRtcEngine.setClientRole(cRole, "");
+        mRtcEngine.setClientRole(cRole);
 
-        log.debug("configEngine " + cRole + " " + mEngineConfig.mVideoProfile);
+        log.debug("configEngine " + cRole + " " + mEngineConfig.mVideoDimension);
     }
 
     public final void preview(boolean start, SurfaceView view, int uid) {
