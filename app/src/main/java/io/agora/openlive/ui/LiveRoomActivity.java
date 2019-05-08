@@ -8,6 +8,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.EGL14;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -24,6 +25,7 @@ import android.widget.TextView;
 
 import com.aiyaapp.aiya.AYEffectHandler;
 import com.aiyaapp.aiya.AyAgoraTool;
+import com.aiyaapp.aiya.AyBeauty;
 import com.aiyaapp.aiya.gpuImage.AYGPUImageConstants;
 import com.aiyaapp.aiya.gpuImage.AYGPUImageEGLContext;
 
@@ -521,7 +523,9 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
     public void surfaceCreated(final SurfaceHolder holder) {
         effectHandler = new AYEffectHandler(getApplicationContext(), false);
         // 设置美颜程度
-        effectHandler.setIntensityOfBeauty(0.5f);
+        effectHandler.setBeautyType(AyBeauty.AY_BEAUTY_TYPE.AY_BEAUTY_TYPE_3);
+        effectHandler.setIntensityOfSmooth(1f);
+        
         // 设置大眼瘦脸
         effectHandler.setIntensityOfBigEye(0.2f);
         effectHandler.setIntensityOfSlimFace(0.8f);
