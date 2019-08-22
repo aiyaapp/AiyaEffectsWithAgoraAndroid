@@ -58,7 +58,7 @@ dependencies {
     implementation 'com.android.support:design:28.0.0'
 
     // ---------- 哎吖科技添加 开始 ----------
-    implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.0'
+    implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.1'
     // ---------- 哎吖科技添加 结束 ----------
 
     implementation 'org.slf4j:slf4j-api:1.7.25'
