@@ -9,7 +9,7 @@
 * 从[oschina下载](http://git.oschina.net/wangyng/AiyaEffectsWithAgoraAndroid)
 
 ## 3. 注意事项
-* [声网SDK版本 2.3.3](https://docs.agora.io/cn/Video/rawdata_android?platform=Android)
+* [声网SDK版本 2.9.2](https://docs.agora.io/cn/Video/rawdata_android?platform=Android)
 
 ## 4. 反馈与建议
 - 主页: [宝宝特效](http://www.lansear.cn/product/bbtx)

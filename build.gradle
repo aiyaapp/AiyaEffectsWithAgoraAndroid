@@ -2,21 +2,24 @@
 
 buildscript {
     repositories {
-        google()
+        maven{ url 'https://maven.aliyun.com/repository/jcenter'}
+        maven{ url 'https://maven.aliyun.com/repository/google'}
         jcenter()
+        google()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
 }
 
 allprojects {
     repositories {
-        google()
+        maven{ url 'https://maven.aliyun.com/repository/jcenter'}
+        maven{ url 'https://maven.aliyun.com/repository/google'}
         jcenter()
-        // ---------- 哎吖科技添加 开始 ----------
-        maven { url "https://dl.bintray.com/aiyaapp/sdk" }
-        // ---------- 哎吖科技添加 结束 ----------
+        google()
     }
 }
 

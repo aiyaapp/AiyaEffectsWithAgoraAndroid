@@ -2,8 +2,19 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../AiyaEffectSDK/AyEffectSDK/AiyaEffectSDK-AyEffectSDK.iml" filepath="$PROJECT_DIR$/../AiyaEffectSDK/AyEffectSDK/AiyaEffectSDK-AyEffectSDK.iml" />
       <module fileurl="file://$PROJECT_DIR$/AiyaEffectsWithAgoraAndroid.iml" filepath="$PROJECT_DIR$/AiyaEffectsWithAgoraAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/AiyaEffectsWithAgoraAndroid-app.iml" filepath="$PROJECT_DIR$/app/AiyaEffectsWithAgoraAndroid-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../AiyaEffectsAndroid/AiyaEffectSDK/AyEffectSDK/AyEffectSDK.iml" filepath="$PROJECT_DIR$/../AiyaEffectsAndroid/AiyaEffectSDK/AyEffectSDK/AyEffectSDK.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid.iml" filepath="$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid~1.iml" filepath="$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid~1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid~2.iml" filepath="$PROJECT_DIR$/Users-wangyang-aiya-git-AiyaEffectsWithAgoraAndroid~2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/aiya-git-AiyaEffectsWithAgoraAndroid.iml" filepath="$PROJECT_DIR$/aiya-git-AiyaEffectsWithAgoraAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/aiya-git-AiyaEffectsWithAgoraAndroid-app.iml" filepath="$PROJECT_DIR$/app/aiya-git-AiyaEffectsWithAgoraAndroid-app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid.iml" filepath="$PROJECT_DIR$/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid-app.iml" filepath="$PROJECT_DIR$/app/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid-app~1.iml" filepath="$PROJECT_DIR$/app/wangyang-aiya-git-AiyaEffectsWithAgoraAndroid-app~1.iml" />
     </modules>
   </component>
 </project>
