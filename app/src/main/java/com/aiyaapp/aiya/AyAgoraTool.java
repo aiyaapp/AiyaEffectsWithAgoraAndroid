@@ -11,6 +11,9 @@ public class AyAgoraTool {
     // 声网数据回调
     public static native void setAgoraDataCallback(AgoraDataCallback callback);
 
+    // 开始或者关闭数据回调
+    public static native void enableAgoraDataCallback(boolean enable);
+
     public interface AgoraDataCallback {
         void onResult(final byte[] buffer, final int width, final int height);
     }

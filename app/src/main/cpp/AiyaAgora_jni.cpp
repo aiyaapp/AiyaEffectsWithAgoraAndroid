@@ -16,6 +16,10 @@ public:
 
         JNIEnv *env;
 
+        if (agoraJVM == NULL) {
+            return true;
+        }
+
         agoraJVM->AttachCurrentThread(&env, NULL);
 
         if (agoraDataCallback == NULL) {
@@ -69,34 +73,42 @@ public:
 };
 
 static AgoraVideoFrameObserver agoraVideoFrameObserver;
+static agora::rtc::IRtcEngine* rtcEngine = NULL;
 
 extern "C"
 JNIEXPORT int JNICALL loadAgoraRtcEnginePlugin(agora::rtc::IRtcEngine* engine) {
-    if (engine == NULL){
-        return 0;
-    }
-    agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
-    mediaEngine.queryInterface(engine, agora::AGORA_IID_MEDIA_ENGINE);
-    if (mediaEngine) {
-        mediaEngine->registerVideoFrameObserver(&agoraVideoFrameObserver);
-    }
-
+    rtcEngine = engine;
     return 0;
 }
 
 extern "C"
 JNIEXPORT void JNICALL unloadAgoraRtcEnginePlugin(agora::rtc::IRtcEngine* engine) {
-    agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
-    mediaEngine.queryInterface(engine, agora::AGORA_IID_MEDIA_ENGINE);
-    if (mediaEngine) {
-        mediaEngine->registerVideoFrameObserver(NULL);
+    rtcEngine = NULL;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_aiyaapp_aiya_AyAgoraTool_enableAgoraDataCallback(JNIEnv *env, jclass type, jboolean enable) {
+
+    if (rtcEngine == NULL) {
+        return;
     }
 
-    if (agoraDataCallback) {
-        JNIEnv *env;
-        agoraJVM->AttachCurrentThread(&env, NULL);
-        env->DeleteGlobalRef(agoraDataCallback);
-        agoraDataCallback = NULL;
+    agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
+    mediaEngine.queryInterface(rtcEngine, agora::AGORA_IID_MEDIA_ENGINE);
+    if (mediaEngine) {
+        if (enable) {
+            mediaEngine->registerVideoFrameObserver(&agoraVideoFrameObserver);
+        } else {
+            mediaEngine->registerVideoFrameObserver(NULL);
+
+            if (agoraDataCallback) {
+                JNIEnv *env;
+                agoraJVM->AttachCurrentThread(&env, NULL);
+                env->DeleteGlobalRef(agoraDataCallback);
+                agoraDataCallback = NULL;
+            }
+        }
     }
 }
 

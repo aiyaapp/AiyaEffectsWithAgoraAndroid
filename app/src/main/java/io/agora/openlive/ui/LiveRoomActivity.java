@@ -543,6 +543,8 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
 
         // 设置特效
         effectHandler.setEffectPath(getExternalCacheDir() + "/aiya/effect/2017/meta.json");
+
+        AyAgoraTool.enableAgoraDataCallback(true);
     }
 
     @Override
@@ -552,6 +554,8 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        AyAgoraTool.enableAgoraDataCallback(false);
+
         if (effectHandler != null) {
             effectHandler.destroy();
             effectHandler = null;
