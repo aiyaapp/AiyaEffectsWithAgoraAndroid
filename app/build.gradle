@@ -60,7 +60,7 @@ dependencies {
     // ---------- 哎吖科技添加 开始 ----------
     implementation "io.agora.rtc:full-sdk:2.9.2"
 
-    implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.4'
+    implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.5'
     // ---------- 哎吖科技添加 结束 ----------
 
     implementation 'org.slf4j:slf4j-api:1.7.25'

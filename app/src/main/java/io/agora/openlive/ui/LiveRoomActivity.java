@@ -27,7 +27,6 @@ import com.aiyaapp.aiya.AYEffectHandler;
 import com.aiyaapp.aiya.AyAgoraTool;
 import com.aiyaapp.aiya.AyBeauty;
 import com.aiyaapp.aiya.gpuImage.AYGPUImageConstants;
-import com.aiyaapp.aiya.gpuImage.AYGPUImageEGLContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,19 +138,6 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
 
         TextView textRoomName = (TextView) findViewById(R.id.room_name);
         textRoomName.setText(roomName);
-
-        // ----------哎吖科技添加 start----------
-        AyAgoraTool.setAgoraDataCallback(new AyAgoraTool.AgoraDataCallback() {
-
-            @Override
-            public void onResult(final byte[] buffer, final int width, final int height) {
-                if (effectHandler != null) {
-                    effectHandler.processWithYUVData(buffer, width, height);
-                }
-            }
-        });
-        // ----------哎吖科技添加 end----------
-
     }
 
     private void broadcasterUI(final ImageView button1, ImageView button2, ImageView button3) {
@@ -544,7 +530,15 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
         // 设置特效
         effectHandler.setEffectPath(getExternalCacheDir() + "/aiya/effect/2017/meta.json");
 
-        AyAgoraTool.enableAgoraDataCallback(true);
+        AyAgoraTool.setAgoraDataCallback(new AyAgoraTool.AgoraDataCallback() {
+
+            @Override
+            public void onResult(final byte[] buffer, final int width, final int height) {
+                if (effectHandler != null) {
+                    effectHandler.processWithYUVData(buffer, width, height);
+                }
+            }
+        });
     }
 
     @Override
@@ -554,7 +548,7 @@ public class LiveRoomActivity extends BaseActivity implements AGEventHandler, Su
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        AyAgoraTool.enableAgoraDataCallback(false);
+        AyAgoraTool.setAgoraDataCallback(null);
 
         if (effectHandler != null) {
             effectHandler.destroy();

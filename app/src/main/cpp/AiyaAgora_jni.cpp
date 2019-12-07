@@ -88,37 +88,36 @@ JNIEXPORT void JNICALL unloadAgoraRtcEnginePlugin(agora::rtc::IRtcEngine* engine
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_aiyaapp_aiya_AyAgoraTool_enableAgoraDataCallback(JNIEnv *env, jclass type, jboolean enable) {
+Java_com_aiyaapp_aiya_AyAgoraTool_setAgoraDataCallback(JNIEnv *env, jclass type, jobject callback) {
 
     if (rtcEngine == NULL) {
         return;
     }
 
+    // 设置视频数据回调
+    if (callback != nullptr) {
+        env->GetJavaVM(&agoraJVM);
+        agoraDataCallback = env->NewGlobalRef(callback);
+
+    } else {
+        if (agoraDataCallback) {
+            JNIEnv *env;
+            agoraJVM->AttachCurrentThread(&env, NULL);
+            env->DeleteGlobalRef(agoraDataCallback);
+            agoraDataCallback = NULL;
+        }
+    }
+
+    // 设置声网回调
     agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
     mediaEngine.queryInterface(rtcEngine, agora::AGORA_IID_MEDIA_ENGINE);
     if (mediaEngine) {
-        if (enable) {
+        if (agoraDataCallback != nullptr) {
             mediaEngine->registerVideoFrameObserver(&agoraVideoFrameObserver);
         } else {
             mediaEngine->registerVideoFrameObserver(NULL);
-
-            if (agoraDataCallback) {
-                JNIEnv *env;
-                agoraJVM->AttachCurrentThread(&env, NULL);
-                env->DeleteGlobalRef(agoraDataCallback);
-                agoraDataCallback = NULL;
-            }
         }
     }
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_aiyaapp_aiya_AyAgoraTool_setAgoraDataCallback(JNIEnv *env, jclass type, jobject callback) {
-
-    env->GetJavaVM(&agoraJVM);
-
-    agoraDataCallback = env->NewGlobalRef(callback);
 }
 //----------哎吖科技添加 end----------
 
