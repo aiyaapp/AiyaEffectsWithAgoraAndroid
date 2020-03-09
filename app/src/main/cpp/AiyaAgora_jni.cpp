@@ -3,6 +3,7 @@
 #include <string>
 #include <android/log.h>
 #include <sstream>
+#include <mutex>
 
 #include "IAgoraRtcEngine.h"
 #include "IAgoraMediaEngine.h"
@@ -10,13 +11,18 @@
 JavaVM *agoraJVM = NULL;
 jobject agoraDataCallback = NULL;
 
+std::mutex locker;
+
 class AgoraVideoFrameObserver : public agora::media::IVideoFrameObserver {
 public:
     virtual bool onCaptureVideoFrame(VideoFrame& videoFrame) override {
 
+        locker.lock();
+        
         JNIEnv *env;
 
         if (agoraJVM == NULL) {
+            locker.unlock();
             return true;
         }
 
@@ -24,18 +30,21 @@ public:
 
         if (agoraDataCallback == NULL) {
             agoraJVM->DetachCurrentThread();
+            locker.unlock();
             return true;
         }
 
         jclass clazz = env->GetObjectClass(agoraDataCallback);
         if (clazz == NULL) {
             agoraJVM->DetachCurrentThread();
+            locker.unlock();
             return true;
         }
 
         jmethodID methodID = env->GetMethodID(clazz, "onResult", "([BII)V");
         if (methodID == NULL) {
             agoraJVM->DetachCurrentThread();
+            locker.unlock();
             return true;
         }
 
@@ -64,6 +73,7 @@ public:
         env->DeleteLocalRef(array);
         agoraJVM->DetachCurrentThread();
 
+        locker.unlock();
         return true;
     }
 
@@ -90,7 +100,10 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_aiyaapp_aiya_AyAgoraTool_setAgoraDataCallback(JNIEnv *env, jclass type, jobject callback) {
 
+    locker.lock();
+    
     if (rtcEngine == NULL) {
+        locker.unlock();
         return;
     }
 
@@ -99,25 +112,30 @@ Java_com_aiyaapp_aiya_AyAgoraTool_setAgoraDataCallback(JNIEnv *env, jclass type,
         env->GetJavaVM(&agoraJVM);
         agoraDataCallback = env->NewGlobalRef(callback);
 
+        // 设置声网回调
+        if (agoraDataCallback != nullptr) {
+            agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
+            mediaEngine.queryInterface(rtcEngine, agora::AGORA_IID_MEDIA_ENGINE);
+            if (mediaEngine) {
+                mediaEngine->registerVideoFrameObserver(&agoraVideoFrameObserver);
+            }
+        }
+
     } else {
+
+        // 设置声网回调
+        agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
+        mediaEngine.queryInterface(rtcEngine, agora::AGORA_IID_MEDIA_ENGINE);
+        if (mediaEngine) {
+            mediaEngine->registerVideoFrameObserver(NULL);
+        }
+
         if (agoraDataCallback) {
-            JNIEnv *env;
-            agoraJVM->AttachCurrentThread(&env, NULL);
             env->DeleteGlobalRef(agoraDataCallback);
             agoraDataCallback = NULL;
         }
     }
-
-    // 设置声网回调
-    agora::util::AutoPtr<agora::media::IMediaEngine> mediaEngine;
-    mediaEngine.queryInterface(rtcEngine, agora::AGORA_IID_MEDIA_ENGINE);
-    if (mediaEngine) {
-        if (agoraDataCallback != nullptr) {
-            mediaEngine->registerVideoFrameObserver(&agoraVideoFrameObserver);
-        } else {
-            mediaEngine->registerVideoFrameObserver(NULL);
-        }
-    }
+    locker.unlock();
 }
 //----------哎吖科技添加 end----------
 

@@ -58,7 +58,7 @@ dependencies {
     implementation 'com.android.support:design:28.0.0'
 
     // ---------- 哎吖科技添加 开始 ----------
-    implementation "io.agora.rtc:full-sdk:2.9.2"
+    implementation "io.agora.rtc:full-sdk:3.0.0"
 
     implementation 'com.aiyaapp.aiya:AyEffectSDK:4.2.5'
     // ---------- 哎吖科技添加 结束 ----------
